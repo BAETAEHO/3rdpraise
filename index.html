@@ -38,7 +38,12 @@
         .score-container { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; }
         .score-btn { background-color: #3498db; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 85%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .score-btn:hover { background-color: #2980b9; }
-        .score-info { font-size: 11px; color: #27ae60; margin-bottom: 3px; display: block; font-weight: bold; }
+        
+        /* 💡 수정 모드 악보 리스트 및 삭제 버튼 스타일 */
+        .edit-score-item { display: flex; justify-content: space-between; align-items: center; background: #f1f2f6; padding: 4px 6px; margin-bottom: 4px; border-radius: 4px; }
+        .edit-score-item span { font-size: 11px; color: #2c3e50; font-weight: bold; }
+        .btn-del-score { background: #e74c3c; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; }
+        .btn-del-score:hover { background: #c0392b; }
     </style>
 </head>
 <body>
@@ -107,6 +112,14 @@
         return -1;
     }
 
+    // 💡 악보 개별 삭제 함수 (수정 모드에서 동작)
+    function removeScore(rowIdx, scoreIdx) {
+        if(confirm("해당 악보를 목록에서 제거하시겠습니까?\n(하단의 '💾 저장하기'를 눌러야 최종 반영됩니다.)")) {
+            rotationData[rowIdx].score.splice(scoreIdx, 1);
+            renderTable(); 
+        }
+    }
+
     function renderTable() {
         const table = document.getElementById('rotationTable');
         table.innerHTML = ""; 
@@ -149,14 +162,23 @@
                         textarea.placeholder = "찬양 곡 목록 입력";
                         td.appendChild(textarea);
                     } else if (config.type === "file") {
-                        let html = '';
+                        // 💡 수정 모드: 기존 파일 리스트와 개별 삭제 버튼 렌더링
+                        let html = '<div style="text-align: left; margin-bottom: 5px;">';
                         if (row[config.key]) {
                             const existingScores = Array.isArray(row[config.key]) ? row[config.key] : [row[config.key]];
-                            if (existingScores.filter(f => f).length > 0) {
-                                html += `<span class="score-info">✓ 악보 ${existingScores.length}개 등록됨</span>`;
+                            const validScores = existingScores.filter(f => f);
+                            
+                            if (validScores.length > 0) {
+                                validScores.forEach((fileName, fileIdx) => {
+                                    html += `
+                                    <div class="edit-score-item">
+                                        <span>📄 악보 ${fileIdx + 1}</span>
+                                        <button type="button" class="btn-del-score" onclick="removeScore(${index}, ${fileIdx})">삭제</button>
+                                    </div>`;
+                                });
                             }
                         }
-                        html += `<input type="file" id="${config.key}-${index}" accept="image/*,.pdf" multiple>`;
+                        html += `</div><input type="file" id="${config.key}-${index}" accept="image/*,.pdf" multiple>`;
                         td.innerHTML = html;
                     } else {
                         const input = document.createElement('input');
@@ -304,30 +326,35 @@
             if (!savedToken) return; 
         }
 
-        // 💡 1. 파일 개수 및 총 용량 사전 검사 로직 추가
         let totalFileSize = 0;
-        const MAX_SIZE_BYTES = 30 * 1024 * 1024; // 30MB
+        const MAX_SIZE_BYTES = 30 * 1024 * 1024; 
 
+        // 💡 용량 제한 검사 및 10개 한도 검사 로직 업데이트
         for (let i = 0; i < rotationData.length; i++) {
             const fileInput = document.getElementById(`score-${i}`);
             if (fileInput && fileInput.files.length > 0) {
-                // 개수 제한 체크
-                if (fileInput.files.length > 10) {
+                
+                let existingCount = 0;
+                if (rotationData[i].score) {
+                    const arr = Array.isArray(rotationData[i].score) ? rotationData[i].score : [rotationData[i].score];
+                    existingCount = arr.filter(f => f).length;
+                }
+
+                if (existingCount + fileInput.files.length > 10) {
                     const currentWeekDate = document.getElementById(`date-${i}`).value || '해당';
-                    alert(`${currentWeekDate} 주차 악보는 최대 10개까지만 등록할 수 있습니다.`);
+                    alert(`${currentWeekDate} 주차 악보는 기존 악보 포함 최대 10개까지만 등록할 수 있습니다.`);
                     return; 
                 }
-                // 용량 합산
+                
                 for (let j = 0; j < fileInput.files.length; j++) {
                     totalFileSize += fileInput.files[j].size;
                 }
             }
         }
 
-        // 💡 2. 용량 제한 체크
         if (totalFileSize > MAX_SIZE_BYTES) {
             const currentMB = (totalFileSize / (1024 * 1024)).toFixed(2);
-            alert(`첨부된 악보의 총 용량이 너무 큽니다.\n(현재: ${currentMB}MB / 최대 허용: 30MB)\n\nGitHub 업로드 오류를 방지하기 위해 파일 용량을 줄이거나 나누어서 저장해 주세요.`);
+            alert(`첨부된 악보의 총 용량이 너무 큽니다.\n(현재: ${currentMB}MB / 최대 허용: 30MB)\n\n용량을 줄이거나 나누어서 저장해 주세요.`);
             return; 
         }
 
@@ -347,10 +374,16 @@
                 rotationData[i].femaleVoc = document.getElementById(`femaleVoc-${i}`).value;
                 rotationData[i].setlist = document.getElementById(`setlist-${i}`).value;
 
+                // 기존 스코어 배열 정비
+                let currentScores = [];
+                if (rotationData[i].score) {
+                    currentScores = Array.isArray(rotationData[i].score) ? rotationData[i].score : [rotationData[i].score];
+                    currentScores = currentScores.filter(f => f);
+                }
+
                 const fileInput = document.getElementById(`score-${i}`);
                 if (fileInput && fileInput.files.length > 0) {
-                    const newScoresArray = [];
-                    
+                    // 새로 선택된 파일 순차 업로드
                     for (let j = 0; j < fileInput.files.length; j++) {
                         const file = fileInput.files[j];
                         const uniqueFileName = Date.now() + "_" + i + "_" + j + "_" + file.name;
@@ -363,15 +396,16 @@
                                 "Content-Type": "application/json"
                             },
                             body: JSON.stringify({
-                                message: `악보 다중 업로드 (${j+1}/${fileInput.files.length}): ${file.name}`,
+                                message: `악보 다중 업로드: ${file.name}`,
                                 content: base64Content
                             })
                         });
                         
-                        newScoresArray.push(uniqueFileName);
+                        // 💡 업로드 성공 시 기존 배열에 추가 (Append)
+                        currentScores.push(uniqueFileName);
                     }
-                    rotationData[i].score = newScoresArray;
                 }
+                rotationData[i].score = currentScores;
             }
 
             const jsonString = JSON.stringify(rotationData, null, 2);
