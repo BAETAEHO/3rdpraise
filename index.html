@@ -35,7 +35,6 @@
         .highlight-col { background-color: #e8f5e9 !important; }
         .badge-this-week { background-color: #27ae60; color: white; font-size: 12px; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-top: 5px; }
         
-        /* 악보 버튼들을 담는 컨테이너 및 버튼 스타일 */
         .score-container { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; }
         .score-btn { background-color: #3498db; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 85%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .score-btn:hover { background-color: #2980b9; }
@@ -65,7 +64,6 @@
 </div>
 
 <script>
-    // 요청하신 고정 주소 세팅 완료
     const GITHUB_OWNER = "BAETAEHO"; 
     const GITHUB_REPO = "3rdpraise";         
     const FILE_PATH = "data.json";
@@ -86,7 +84,7 @@
             renderTable();
         } catch (error) {
             const table = document.getElementById('rotationTable');
-            table.innerHTML = "<tr><td style='border: none;'>데이터를 불러오는데 실패했습니다. GitHub 설정을 확인해주세요.</td></tr>";
+            table.innerHTML = "<tr><td style='border: none;'>데이터를 불러오는데 실패했습니다. 처음이시라면 파일이 잘 업로드되었는지 확인해주세요.</td></tr>";
         }
     }
 
@@ -153,13 +151,11 @@
                     } else if (config.type === "file") {
                         let html = '';
                         if (row[config.key]) {
-                            // 기존 데이터가 단일 문자열이든 배열이든 배열로 묶어서 처리
                             const existingScores = Array.isArray(row[config.key]) ? row[config.key] : [row[config.key]];
                             if (existingScores.filter(f => f).length > 0) {
                                 html += `<span class="score-info">✓ 악보 ${existingScores.length}개 등록됨</span>`;
                             }
                         }
-                        // 💡 multiple 속성을 추가하여 다중 파일 선택 가능하게 변경
                         html += `<input type="file" id="${config.key}-${index}" accept="image/*,.pdf" multiple>`;
                         td.innerHTML = html;
                     } else {
@@ -187,7 +183,6 @@
                             if (validScores.length > 0) {
                                 let buttonsHtml = '<div class="score-container">';
                                 validScores.forEach((fileName, fileIdx) => {
-                                    // 파일이 1개면 '악보 보기', 여러 개면 '악보 1, 악보 2...'로 표시
                                     const btnText = validScores.length === 1 ? "📄 악보 보기" : `📄 악보 ${fileIdx + 1}`;
                                     buttonsHtml += `<a href="scores/${fileName}" target="_blank" class="score-btn">${btnText}</a>`;
                                 });
@@ -309,6 +304,33 @@
             if (!savedToken) return; 
         }
 
+        // 💡 1. 파일 개수 및 총 용량 사전 검사 로직 추가
+        let totalFileSize = 0;
+        const MAX_SIZE_BYTES = 30 * 1024 * 1024; // 30MB
+
+        for (let i = 0; i < rotationData.length; i++) {
+            const fileInput = document.getElementById(`score-${i}`);
+            if (fileInput && fileInput.files.length > 0) {
+                // 개수 제한 체크
+                if (fileInput.files.length > 10) {
+                    const currentWeekDate = document.getElementById(`date-${i}`).value || '해당';
+                    alert(`${currentWeekDate} 주차 악보는 최대 10개까지만 등록할 수 있습니다.`);
+                    return; 
+                }
+                // 용량 합산
+                for (let j = 0; j < fileInput.files.length; j++) {
+                    totalFileSize += fileInput.files[j].size;
+                }
+            }
+        }
+
+        // 💡 2. 용량 제한 체크
+        if (totalFileSize > MAX_SIZE_BYTES) {
+            const currentMB = (totalFileSize / (1024 * 1024)).toFixed(2);
+            alert(`첨부된 악보의 총 용량이 너무 큽니다.\n(현재: ${currentMB}MB / 최대 허용: 30MB)\n\nGitHub 업로드 오류를 방지하기 위해 파일 용량을 줄이거나 나누어서 저장해 주세요.`);
+            return; 
+        }
+
         const saveBtn = document.getElementById('saveBtn');
         saveBtn.innerText = "⏳ 파일 업로드 중...";
         saveBtn.style.pointerEvents = "none";
@@ -327,18 +349,10 @@
 
                 const fileInput = document.getElementById(`score-${i}`);
                 if (fileInput && fileInput.files.length > 0) {
-                    // 💡 최대 10개 제한 체크
-                    if (fileInput.files.length > 10) {
-                        alert(`${rotationData[i].date} 주차 악보는 최대 10개까지만 한 번에 등록할 수 있습니다.`);
-                        throw new Error("파일 개수 초과");
-                    }
-
                     const newScoresArray = [];
                     
-                    // 선택된 파일 개수만큼 루프를 돌며 순차 업로드 진행
                     for (let j = 0; j < fileInput.files.length; j++) {
                         const file = fileInput.files[j];
-                        // 중복 및 동시 생성 파일명 충돌 방지를 위해 인덱스(j)와 타임스탬프 결합
                         const uniqueFileName = Date.now() + "_" + i + "_" + j + "_" + file.name;
                         const base64Content = await getBase64(file);
                         
@@ -356,8 +370,6 @@
                         
                         newScoresArray.push(uniqueFileName);
                     }
-                    
-                    // 해당 주차의 악보 데이터를 배열형태로 최종 저장
                     rotationData[i].score = newScoresArray;
                 }
             }
@@ -385,7 +397,7 @@
                 isEditMode = false;
                 saveBtn.innerText = "💾 저장하기";
                 saveBtn.style.pointerEvents = "auto";
-                document.getElementById('editBtn').style.style.display = 'flex';
+                document.getElementById('editBtn').style.display = 'flex';
                 document.getElementById('saveBtn').style.display = 'none';
                 document.getElementById('addBtn').style.display = 'none';
                 loadData();
@@ -395,10 +407,8 @@
         } catch (error) {
             saveBtn.innerText = "💾 저장하기";
             saveBtn.style.pointerEvents = "auto";
-            if (error.message !== "파일 개수 초과") {
-                localStorage.removeItem('githubPraiseToken');
-                alert("저장 및 파일 업로드에 실패했습니다. 토큰 무결성 또는 파일 총 용량을 확인해 주세요.");
-            }
+            localStorage.removeItem('githubPraiseToken');
+            alert("저장 및 파일 업로드에 실패했습니다. 토큰 무결성을 확인해 주세요.");
         }
     }
 
