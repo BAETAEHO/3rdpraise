@@ -35,10 +35,11 @@
         .highlight-col { background-color: #e8f5e9 !important; }
         .badge-this-week { background-color: #27ae60; color: white; font-size: 12px; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-top: 5px; }
         
-        /* 악보 버튼 스타일 */
-        .score-btn { background-color: #3498db; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* 악보 버튼들을 담는 컨테이너 및 버튼 스타일 */
+        .score-container { display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; }
+        .score-btn { background-color: #3498db; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 85%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .score-btn:hover { background-color: #2980b9; }
-        .score-info { font-size: 11px; color: #7f8c8d; margin-bottom: 5px; display: block; word-break: break-all; }
+        .score-info { font-size: 11px; color: #27ae60; margin-bottom: 3px; display: block; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -64,7 +65,7 @@
 </div>
 
 <script>
-    // 알려주신 정보로 기본 세팅 적용 완료!
+    // 요청하신 고정 주소 세팅 완료
     const GITHUB_OWNER = "BAETAEHO"; 
     const GITHUB_REPO = "3rdpraise";         
     const FILE_PATH = "data.json";
@@ -85,7 +86,7 @@
             renderTable();
         } catch (error) {
             const table = document.getElementById('rotationTable');
-            table.innerHTML = "<tr><td style='border: none;'>데이터를 불러오는데 실패했습니다. 처음이시라면 파일 업로드를 확인해주세요.</td></tr>";
+            table.innerHTML = "<tr><td style='border: none;'>데이터를 불러오는데 실패했습니다. GitHub 설정을 확인해주세요.</td></tr>";
         }
     }
 
@@ -119,7 +120,6 @@
 
         const thisWeekIndex = getThisWeekIndex(); 
 
-        // 악보(score) 항목 추가
         const rowStructure = [
             { label: "날짜", key: "date", type: "input" },
             { label: "메인건반", key: "mainKey", type: "input" },
@@ -130,7 +130,7 @@
             { label: "남자보컬", key: "maleVoc", type: "input" },
             { label: "여자보컬", key: "femaleVoc", type: "input" },
             { label: "찬양 콘티", key: "setlist", type: "textarea" },
-            { label: "악보 첨부", key: "score", type: "file" } // 💡 파일 업로드 타입 추가
+            { label: "악보 첨부", key: "score", type: "file" } 
         ];
 
         rowStructure.forEach(config => {
@@ -151,14 +151,16 @@
                         textarea.placeholder = "찬양 곡 목록 입력";
                         td.appendChild(textarea);
                     } else if (config.type === "file") {
-                        // 💡 파일 업로드 인풋 및 기존 파일명 표시
                         let html = '';
                         if (row[config.key]) {
-                            // 원본 파일명만 추출해서 보여줌 (앞의 숫자 태그 제거)
-                            const displayFileName = row[config.key].split('_').slice(1).join('_');
-                            html += `<span class="score-info">첨부됨: ${displayFileName}</span>`;
+                            // 기존 데이터가 단일 문자열이든 배열이든 배열로 묶어서 처리
+                            const existingScores = Array.isArray(row[config.key]) ? row[config.key] : [row[config.key]];
+                            if (existingScores.filter(f => f).length > 0) {
+                                html += `<span class="score-info">✓ 악보 ${existingScores.length}개 등록됨</span>`;
+                            }
                         }
-                        html += `<input type="file" id="${config.key}-${index}" accept="image/*,.pdf">`;
+                        // 💡 multiple 속성을 추가하여 다중 파일 선택 가능하게 변경
+                        html += `<input type="file" id="${config.key}-${index}" accept="image/*,.pdf" multiple>`;
                         td.innerHTML = html;
                     } else {
                         const input = document.createElement('input');
@@ -178,9 +180,22 @@
                         td.className += " setlist-cell";
                         td.innerText = row[config.key] || "";
                     } else if (config.key === "score") {
-                        // 💡 악보가 있으면 다운로드/보기 버튼 표시
                         if (row[config.key]) {
-                            td.innerHTML = `<a href="scores/${row[config.key]}" target="_blank" class="score-btn">📄 악보 보기</a>`;
+                            const scoreList = Array.isArray(row[config.key]) ? row[config.key] : [row[config.key]];
+                            const validScores = scoreList.filter(f => f);
+
+                            if (validScores.length > 0) {
+                                let buttonsHtml = '<div class="score-container">';
+                                validScores.forEach((fileName, fileIdx) => {
+                                    // 파일이 1개면 '악보 보기', 여러 개면 '악보 1, 악보 2...'로 표시
+                                    const btnText = validScores.length === 1 ? "📄 악보 보기" : `📄 악보 ${fileIdx + 1}`;
+                                    buttonsHtml += `<a href="scores/${fileName}" target="_blank" class="score-btn">${btnText}</a>`;
+                                });
+                                buttonsHtml += '</div>';
+                                td.innerHTML = buttonsHtml;
+                            } else {
+                                td.innerHTML = `<span style="color: #bdc3c7; font-size: 12px;">없음</span>`;
+                            }
                         } else {
                             td.innerHTML = `<span style="color: #bdc3c7; font-size: 12px;">없음</span>`;
                         }
@@ -229,7 +244,7 @@
 
     function addRow() {
         let nextDateStr = "";
-        let prevRowData = { mainKey: "", subKey: "", bass: "", guitar: "", drum: "", maleVoc: "", femaleVoc: "", setlist: "", score: "" };
+        let prevRowData = { mainKey: "", subKey: "", bass: "", guitar: "", drum: "", maleVoc: "", femaleVoc: "", setlist: "", score: [] };
 
         if (rotationData.length > 0) {
             const lastRow = rotationData[rotationData.length - 1];
@@ -243,7 +258,7 @@
                 maleVoc: lastRow.maleVoc || "",
                 femaleVoc: lastRow.femaleVoc || "",
                 setlist: lastRow.setlist || "",
-                score: "" // 악보는 매주 바뀌므로 자동 복사하지 않고 비워둠
+                score: [] 
             };
 
             if (lastRow.date && lastRow.date.includes('/')) {
@@ -271,13 +286,11 @@
         }
     }
 
-    // 💡 파일을 Base64 문자열로 변환하는 헬퍼 함수
     function getBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => {
-                // "data:image/jpeg;base64," 등의 접두사를 제거하고 순수 데이터만 추출
                 let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
                 if ((encoded.length % 4) > 0) {
                     encoded += '='.repeat(4 - (encoded.length % 4));
@@ -297,11 +310,10 @@
         }
 
         const saveBtn = document.getElementById('saveBtn');
-        saveBtn.innerText = "⏳ 파일 업로드 및 저장 중...";
+        saveBtn.innerText = "⏳ 파일 업로드 중...";
         saveBtn.style.pointerEvents = "none";
 
         try {
-            // 1. 텍스트 데이터 먼저 수집 및 첨부파일 확인
             for (let i = 0; i < rotationData.length; i++) {
                 rotationData[i].date = document.getElementById(`date-${i}`).value;
                 rotationData[i].mainKey = document.getElementById(`mainKey-${i}`).value;
@@ -313,33 +325,43 @@
                 rotationData[i].femaleVoc = document.getElementById(`femaleVoc-${i}`).value;
                 rotationData[i].setlist = document.getElementById(`setlist-${i}`).value;
 
-                // 2. 파일이 선택되었다면 개별적으로 GitHub API를 통해 업로드
                 const fileInput = document.getElementById(`score-${i}`);
                 if (fileInput && fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    // 중복 방지를 위해 파일명 앞에 시간을 붙임 (예: 1716382..._score.pdf)
-                    const uniqueFileName = Date.now() + "_" + file.name;
-                    const base64Content = await getBase64(file);
+                    // 💡 최대 10개 제한 체크
+                    if (fileInput.files.length > 10) {
+                        alert(`${rotationData[i].date} 주차 악보는 최대 10개까지만 한 번에 등록할 수 있습니다.`);
+                        throw new Error("파일 개수 초과");
+                    }
+
+                    const newScoresArray = [];
                     
-                    // scores 폴더로 파일 업로드
-                    await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/scores/${uniqueFileName}`, {
-                        method: "PUT",
-                        headers: {
-                            "Authorization": `Bearer ${savedToken}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            message: `악보 업로드: ${file.name}`,
-                            content: base64Content
-                        })
-                    });
+                    // 선택된 파일 개수만큼 루프를 돌며 순차 업로드 진행
+                    for (let j = 0; j < fileInput.files.length; j++) {
+                        const file = fileInput.files[j];
+                        // 중복 및 동시 생성 파일명 충돌 방지를 위해 인덱스(j)와 타임스탬프 결합
+                        const uniqueFileName = Date.now() + "_" + i + "_" + j + "_" + file.name;
+                        const base64Content = await getBase64(file);
+                        
+                        await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/scores/${uniqueFileName}`, {
+                            method: "PUT",
+                            headers: {
+                                "Authorization": `Bearer ${savedToken}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                message: `악보 다중 업로드 (${j+1}/${fileInput.files.length}): ${file.name}`,
+                                content: base64Content
+                            })
+                        });
+                        
+                        newScoresArray.push(uniqueFileName);
+                    }
                     
-                    // 업로드 성공 시 JSON 기록용으로 파일명 업데이트
-                    rotationData[i].score = uniqueFileName;
+                    // 해당 주차의 악보 데이터를 배열형태로 최종 저장
+                    rotationData[i].score = newScoresArray;
                 }
             }
 
-            // 3. 최종 데이터(JSON) 업데이트
             const jsonString = JSON.stringify(rotationData, null, 2);
             const encodedContent = window.btoa(unescape(encodeURIComponent(jsonString)));
 
@@ -350,7 +372,7 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    message: "웹에서 찬양팀 로테이션 및 악보 업데이트",
+                    message: "웹에서 찬양팀 로테이션 및 다중 악보 업데이트",
                     content: encodedContent,
                     sha: fileSha
                 })
@@ -358,12 +380,12 @@
 
             if (response.ok) {
                 localStorage.setItem('githubPraiseToken', savedToken);
-                alert("성공적으로 저장되었습니다!\n(파일 용량에 따라 웹사이트 반영까지 1~2분 정도 걸릴 수 있습니다.)");
+                alert("성공적으로 저장되었습니다!\n(파일이 여러 개일 경우 GitHub 반영 완료까지 최대 1~2분이 걸릴 수 있습니다.)");
 
                 isEditMode = false;
                 saveBtn.innerText = "💾 저장하기";
                 saveBtn.style.pointerEvents = "auto";
-                document.getElementById('editBtn').style.display = 'flex';
+                document.getElementById('editBtn').style.style.display = 'flex';
                 document.getElementById('saveBtn').style.display = 'none';
                 document.getElementById('addBtn').style.display = 'none';
                 loadData();
@@ -373,8 +395,10 @@
         } catch (error) {
             saveBtn.innerText = "💾 저장하기";
             saveBtn.style.pointerEvents = "auto";
-            localStorage.removeItem('githubPraiseToken');
-            alert("저장 및 업로드에 실패했습니다. 인증 키(Token)가 올바르지 않거나 파일이 너무 클 수 있습니다.");
+            if (error.message !== "파일 개수 초과") {
+                localStorage.removeItem('githubPraiseToken');
+                alert("저장 및 파일 업로드에 실패했습니다. 토큰 무결성 또는 파일 총 용량을 확인해 주세요.");
+            }
         }
     }
 
