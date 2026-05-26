@@ -15,18 +15,49 @@
         .btn-save { background-color: #27ae60; color: white; display: none; }
         .btn-add { background-color: #3498db; color: white; width: 100%; margin-top: 10px; padding: 12px; display: none; }
         
-        table { width: 100%; border-collapse: collapse; }
-        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
         
-        th { background-color: #f8f9fa; font-weight: bold; white-space: nowrap; width: 120px; border: 1px solid #ddd; padding: 12px; text-align: center; }
-        td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; vertical-align: middle; min-width: 150px; }
+        /* 테이블 스크롤 컨테이너 */
+        .table-responsive { overflow-x: auto; position: relative; padding-bottom: 10px; }
+        
+        /* 💡 틀 고정 (Sticky) 적용: 항목 이름이 스크롤되어도 왼쪽에 남음 */
+        th { 
+            background-color: #f8f9fa; 
+            font-weight: bold; 
+            white-space: nowrap; 
+            width: 110px; 
+            min-width: 110px; 
+            padding: 12px; 
+            text-align: center; 
+            border-bottom: 1px solid #ddd; 
+            border-right: 1px solid #ddd;
+            position: sticky; 
+            left: 0; 
+            z-index: 2; 
+            /* 스크롤 시 약간의 그림자를 주어 입체감/구분감 부여 */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+        
+        td { 
+            border-bottom: 1px solid #ddd; 
+            border-right: 1px solid #ddd; 
+            padding: 10px; 
+            text-align: center; 
+            font-size: 14px; 
+            vertical-align: middle; 
+            min-width: 150px; 
+        }
+        
+        /* 테이블 바깥 테두리 처리 */
+        tr:first-child th, tr:first-child td { border-top: 1px solid #ddd; }
+        th:first-child { border-left: 1px solid #ddd; }
         
         input { width: 90%; padding: 6px; box-sizing: border-box; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
         textarea { width: 92%; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; min-height: 80px; font-family: 'Malgun Gothic', sans-serif; font-size: 13px; line-height: 1.4; }
         
         .setlist-cell { text-align: left; white-space: pre-wrap; font-size: 13px; line-height: 1.5; padding: 12px; }
 
-        /* 💡 이번 주 일정 하이라이트 스타일 */
+        /* 이번 주 일정 하이라이트 스타일 */
         .highlight-col { background-color: #e8f5e9 !important; }
         .badge-this-week { background-color: #27ae60; color: white; font-size: 12px; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-top: 5px; }
     </style>
@@ -44,9 +75,9 @@
         </div>
     </div>
 
-    <div class="table-responsive">
+    <div class="table-responsive" id="tableContainer">
         <table id="rotationTable">
-            <tr><td style="text-align: center; padding: 20px;">데이터를 불러오는 중입니다...</td></tr>
+            <tr><td style="text-align: center; padding: 20px; border: none;">데이터를 불러오는 중입니다...</td></tr>
         </table>
     </div>
     
@@ -55,7 +86,7 @@
 
 <script>
     // =====================================================================
-    // 💡 아래 두 항목을 본인의 GitHub 정보로 변경하세요! (따옴표 안에 작성)
+    // 💡 아래 두 항목을 본인의 GitHub 정보로 변경하세요!
     // =====================================================================
     const GITHUB_OWNER = "BAETAEHO"; 
     const GITHUB_REPO = "3rdpraise";         
@@ -78,15 +109,14 @@
             renderTable();
         } catch (error) {
             const table = document.getElementById('rotationTable');
-            table.innerHTML = "<tr><td>데이터를 불러오는데 실패했습니다. GitHub 설정을 확인해주세요.</td></tr>";
+            table.innerHTML = "<tr><td style='border: none;'>데이터를 불러오는데 실패했습니다. GitHub 설정을 확인해주세요.</td></tr>";
         }
     }
 
-    // 🔄 다가오는 주일(일요일)의 인덱스 번호를 찾는 함수
     function getThisWeekIndex() {
         const today = new Date();
         const currentYear = today.getFullYear();
-        today.setHours(0, 0, 0, 0); // 시간은 무시하고 날짜만 비교
+        today.setHours(0, 0, 0, 0);
 
         for (let i = 0; i < rotationData.length; i++) {
             if (!rotationData[i].date) continue;
@@ -94,19 +124,17 @@
             const [month, day] = rotationData[i].date.split('/');
             let colDate = new Date(currentYear, month - 1, day);
             
-            // 연말(12월)->연초(1월)로 넘어가는 예외 상황 처리
             const diffDays = Math.ceil((colDate - today) / (1000 * 60 * 60 * 24));
             if (diffDays < -300) { 
                 colDate.setFullYear(currentYear + 1);
             }
 
-            // 오늘을 기준으로 0일(오늘)~6일(토요일까지) 이내에 있는 일요일을 찾음
             const adjustedDiff = Math.ceil((colDate - today) / (1000 * 60 * 60 * 24));
             if (adjustedDiff >= 0 && adjustedDiff <= 6) {
-                return i; // 이번 주 인덱스 반환
+                return i;
             }
         }
-        return -1; // 이번 주 일정이 없으면 -1 반환
+        return -1;
     }
 
     function renderTable() {
@@ -114,11 +142,11 @@
         table.innerHTML = ""; 
 
         if (rotationData.length === 0) {
-            table.innerHTML = "<tr><td>등록된 로테이션 일정이 없습니다.</td></tr>";
+            table.innerHTML = "<tr><td style='border:none;'>등록된 일정이 없습니다.</td></tr>";
             return;
         }
 
-        const thisWeekIndex = getThisWeekIndex(); // 이번 주에 해당하는 열 찾기
+        const thisWeekIndex = getThisWeekIndex(); 
 
         const rowStructure = [
             { label: "날짜", key: "date", type: "input" },
@@ -141,7 +169,6 @@
             rotationData.forEach((row, index) => {
                 const td = document.createElement('td');
                 
-                // 이번 주(돌아오는 주일)에 해당하는 칸이면 배경색 추가
                 if (index === thisWeekIndex) {
                     td.classList.add('highlight-col');
                 }
@@ -162,7 +189,6 @@
                     }
                 } else {
                     if (config.key === "date") {
-                        // 날짜 칸일 경우, 이번 주라면 배지를 추가로 표시
                         if (index === thisWeekIndex) {
                             td.innerHTML = `<strong style="color: #27ae60; font-size: 16px;">${row[config.key]}</strong><br><span class="badge-this-week">이번 주</span>`;
                         } else {
@@ -194,6 +220,18 @@
             });
             table.appendChild(deleteTr);
         }
+
+        // 💡 렌더링 직후 '이번 주' 위치로 자동 스크롤
+        setTimeout(() => {
+            if (!isEditMode && thisWeekIndex !== -1) {
+                const container = document.getElementById('tableContainer');
+                // (항목 이름 너비 110px * 인덱스) + 여백 계산하여 스크롤 이동
+                const scrollPosition = (thisWeekIndex * 150) - 50; 
+                if (container) {
+                    container.scrollTo({ left: Math.max(0, scrollPosition), behavior: 'smooth' });
+                }
+            }
+        }, 100);
     }
 
     function enterEditMode() {
