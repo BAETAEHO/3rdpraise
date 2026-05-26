@@ -8,7 +8,8 @@
     "drum": "김효중",
     "maleVoc": "정승호 / 장상훈",
     "femaleVoc": "전미선 / 김부희(Alto)",
-    "setlist": "1. 내 모든 삶의 행동 주 안에\n2. 주 임재 안에서"
+    "setlist": "1. 내 모든 삶의 행동 주 안에\n2. 주 임재 안에서",
+    "score": []
   },
   {
     "date": "5/10",
@@ -19,7 +20,8 @@
     "drum": "김효중",
     "maleVoc": "정승호",
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
-    "setlist": ""
+    "setlist": "",
+    "score": []
   },
   {
     "date": "5/17",
@@ -31,10 +33,7 @@
     "maleVoc": "장상훈",
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
     "setlist": "",
-    "score": [
-      "1779770718676_2_0_Screenshot_20260526_095525_KakaoTalk.jpg",
-      "1779770721368_2_1_20260525_170504.jpg"
-    ]
+    "score": []
   },
   {
     "date": "5/24",
@@ -65,7 +64,8 @@
     "drum": "권현성",
     "maleVoc": "장상훈",
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
-    "setlist": ""
+    "setlist": "",
+    "score": []
   },
   {
     "date": "6/7",
@@ -76,7 +76,8 @@
     "drum": "권현성",
     "maleVoc": "장상훈",
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
-    "setlist": ""
+    "setlist": "",
+    "score": []
   },
   {
     "date": "6/14",
@@ -87,7 +88,8 @@
     "drum": "권현성",
     "maleVoc": "장상훈",
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
-    "setlist": ""
+    "setlist": "",
+    "score": []
   },
   {
     "date": "6/21",
@@ -98,7 +100,8 @@
     "drum": "권현성",
     "maleVoc": "장상훈",
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
-    "setlist": ""
+    "setlist": "",
+    "score": []
   },
   {
     "date": "6/28",
@@ -109,6 +112,7 @@
     "drum": "권현성",
     "maleVoc": "장상훈",
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
-    "setlist": ""
+    "setlist": "",
+    "score": []
   }
 ]
