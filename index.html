@@ -16,11 +16,8 @@
         .btn-add { background-color: #3498db; color: white; width: 100%; margin-top: 10px; padding: 12px; display: none; }
         
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        
-        /* 테이블 스크롤 컨테이너 */
         .table-responsive { overflow-x: auto; position: relative; padding-bottom: 10px; }
         
-        /* 💡 틀 고정 (Sticky) 적용: 항목 이름이 스크롤되어도 왼쪽에 남음 */
         th { 
             background-color: #f8f9fa; 
             font-weight: bold; 
@@ -34,7 +31,6 @@
             position: sticky; 
             left: 0; 
             z-index: 2; 
-            /* 스크롤 시 약간의 그림자를 주어 입체감/구분감 부여 */
             box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
         
@@ -48,7 +44,6 @@
             min-width: 150px; 
         }
         
-        /* 테이블 바깥 테두리 처리 */
         tr:first-child th, tr:first-child td { border-top: 1px solid #ddd; }
         th:first-child { border-left: 1px solid #ddd; }
         
@@ -56,8 +51,6 @@
         textarea { width: 92%; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; min-height: 80px; font-family: 'Malgun Gothic', sans-serif; font-size: 13px; line-height: 1.4; }
         
         .setlist-cell { text-align: left; white-space: pre-wrap; font-size: 13px; line-height: 1.5; padding: 12px; }
-
-        /* 이번 주 일정 하이라이트 스타일 */
         .highlight-col { background-color: #e8f5e9 !important; }
         .badge-this-week { background-color: #27ae60; color: white; font-size: 12px; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-top: 5px; }
     </style>
@@ -221,11 +214,9 @@
             table.appendChild(deleteTr);
         }
 
-        // 💡 렌더링 직후 '이번 주' 위치로 자동 스크롤
         setTimeout(() => {
             if (!isEditMode && thisWeekIndex !== -1) {
                 const container = document.getElementById('tableContainer');
-                // (항목 이름 너비 110px * 인덱스) + 여백 계산하여 스크롤 이동
                 const scrollPosition = (thisWeekIndex * 150) - 50; 
                 if (container) {
                     container.scrollTo({ left: Math.max(0, scrollPosition), behavior: 'smooth' });
@@ -242,9 +233,54 @@
         renderTable();
     }
 
+    // 💡 기능 개선: 날짜 자동 계산 및 전주 데이터 복사 적용
     function addRow() {
-        rotationData.push({ date: "", mainKey: "", subKey: "", bass: "", guitar: "", drum: "", maleVoc: "", femaleVoc: "", setlist: "" });
+        let nextDateStr = "";
+        let prevRowData = { mainKey: "", subKey: "", bass: "", guitar: "", drum: "", maleVoc: "", femaleVoc: "", setlist: "" };
+
+        // 현재 데이터가 하나 이상 존재할 때 동작
+        if (rotationData.length > 0) {
+            const lastRow = rotationData[rotationData.length - 1];
+            
+            // 1. 전주 데이터 복사 (날짜 제외)
+            prevRowData = {
+                mainKey: lastRow.mainKey || "",
+                subKey: lastRow.subKey || "",
+                bass: lastRow.bass || "",
+                guitar: lastRow.guitar || "",
+                drum: lastRow.drum || "",
+                maleVoc: lastRow.maleVoc || "",
+                femaleVoc: lastRow.femaleVoc || "",
+                setlist: lastRow.setlist || ""
+            };
+
+            // 2. 마지막 등록 날짜 기준으로 정확히 7일 뒤 날짜 계산
+            if (lastRow.date && lastRow.date.includes('/')) {
+                const [month, day] = lastRow.date.split('/');
+                const currentYear = new Date().getFullYear();
+                
+                const lastDateObj = new Date(currentYear, parseInt(month) - 1, parseInt(day));
+                lastDateObj.setDate(lastDateObj.getDate() + 7); // 7일 더하기
+                
+                nextDateStr = `${lastDateObj.getMonth() + 1}/${lastDateObj.getDate()}`;
+            }
+        }
+
+        // 수집된 자동 생성 데이터 배열에 추가
+        rotationData.push({
+            date: nextDateStr,
+            ...prevRowData
+        });
+        
         renderTable();
+
+        // 새 항목이 추가되면 해당 위치(맨 오른쪽)로 스크롤 이동하여 보여줌
+        setTimeout(() => {
+            const container = document.getElementById('tableContainer');
+            if (container) {
+                container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+            }
+        }, 50);
     }
 
     function deleteRow(index) {
