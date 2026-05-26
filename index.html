@@ -6,7 +6,7 @@
     <title>3부 찬양팀 로테이션 🎶</title>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; padding: 20px; color: #333; }
-        .container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #2c3e50; }
         .btn-container { display: flex; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 14px; }
@@ -19,40 +19,26 @@
         .table-responsive { overflow-x: auto; position: relative; padding-bottom: 10px; }
         
         th { 
-            background-color: #f8f9fa; 
-            font-weight: bold; 
-            white-space: nowrap; 
-            width: 110px; 
-            min-width: 110px; 
-            padding: 12px; 
-            text-align: center; 
-            border-bottom: 1px solid #ddd; 
-            border-right: 1px solid #ddd;
-            position: sticky; 
-            left: 0; 
-            z-index: 2; 
-            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            background-color: #f8f9fa; font-weight: bold; white-space: nowrap; width: 110px; min-width: 110px; 
+            padding: 12px; text-align: center; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd;
+            position: sticky; left: 0; z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
-        
-        td { 
-            border-bottom: 1px solid #ddd; 
-            border-right: 1px solid #ddd; 
-            padding: 10px; 
-            text-align: center; 
-            font-size: 14px; 
-            vertical-align: middle; 
-            min-width: 150px; 
-        }
-        
+        td { border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; vertical-align: middle; min-width: 150px; }
         tr:first-child th, tr:first-child td { border-top: 1px solid #ddd; }
         th:first-child { border-left: 1px solid #ddd; }
         
-        input { width: 90%; padding: 6px; box-sizing: border-box; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        input[type="text"] { width: 90%; padding: 6px; box-sizing: border-box; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        input[type="file"] { width: 90%; margin-top: 5px; font-size: 11px; }
         textarea { width: 92%; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; min-height: 80px; font-family: 'Malgun Gothic', sans-serif; font-size: 13px; line-height: 1.4; }
         
         .setlist-cell { text-align: left; white-space: pre-wrap; font-size: 13px; line-height: 1.5; padding: 12px; }
         .highlight-col { background-color: #e8f5e9 !important; }
         .badge-this-week { background-color: #27ae60; color: white; font-size: 12px; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-top: 5px; }
+        
+        /* 악보 버튼 스타일 */
+        .score-btn { background-color: #3498db; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .score-btn:hover { background-color: #2980b9; }
+        .score-info { font-size: 11px; color: #7f8c8d; margin-bottom: 5px; display: block; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -78,13 +64,10 @@
 </div>
 
 <script>
-    // =====================================================================
-    // 💡 아래 두 항목을 본인의 GitHub 정보로 변경하세요!
-    // =====================================================================
+    // 알려주신 정보로 기본 세팅 적용 완료!
     const GITHUB_OWNER = "BAETAEHO"; 
     const GITHUB_REPO = "3rdpraise";         
     const FILE_PATH = "data.json";
-    // =====================================================================
 
     let rotationData = [];
     let isEditMode = false;
@@ -102,7 +85,7 @@
             renderTable();
         } catch (error) {
             const table = document.getElementById('rotationTable');
-            table.innerHTML = "<tr><td style='border: none;'>데이터를 불러오는데 실패했습니다. GitHub 설정을 확인해주세요.</td></tr>";
+            table.innerHTML = "<tr><td style='border: none;'>데이터를 불러오는데 실패했습니다. 처음이시라면 파일 업로드를 확인해주세요.</td></tr>";
         }
     }
 
@@ -113,19 +96,14 @@
 
         for (let i = 0; i < rotationData.length; i++) {
             if (!rotationData[i].date) continue;
-            
             const [month, day] = rotationData[i].date.split('/');
             let colDate = new Date(currentYear, month - 1, day);
             
             const diffDays = Math.ceil((colDate - today) / (1000 * 60 * 60 * 24));
-            if (diffDays < -300) { 
-                colDate.setFullYear(currentYear + 1);
-            }
+            if (diffDays < -300) colDate.setFullYear(currentYear + 1);
 
             const adjustedDiff = Math.ceil((colDate - today) / (1000 * 60 * 60 * 24));
-            if (adjustedDiff >= 0 && adjustedDiff <= 6) {
-                return i;
-            }
+            if (adjustedDiff >= 0 && adjustedDiff <= 6) return i;
         }
         return -1;
     }
@@ -141,6 +119,7 @@
 
         const thisWeekIndex = getThisWeekIndex(); 
 
+        // 악보(score) 항목 추가
         const rowStructure = [
             { label: "날짜", key: "date", type: "input" },
             { label: "메인건반", key: "mainKey", type: "input" },
@@ -150,7 +129,8 @@
             { label: "드럼", key: "drum", type: "input" },
             { label: "남자보컬", key: "maleVoc", type: "input" },
             { label: "여자보컬", key: "femaleVoc", type: "input" },
-            { label: "찬양 콘티", key: "setlist", type: "textarea" }
+            { label: "찬양 콘티", key: "setlist", type: "textarea" },
+            { label: "악보 첨부", key: "score", type: "file" } // 💡 파일 업로드 타입 추가
         ];
 
         rowStructure.forEach(config => {
@@ -161,10 +141,7 @@
 
             rotationData.forEach((row, index) => {
                 const td = document.createElement('td');
-                
-                if (index === thisWeekIndex) {
-                    td.classList.add('highlight-col');
-                }
+                if (index === thisWeekIndex) td.classList.add('highlight-col');
                 
                 if (isEditMode) {
                     if (config.type === "textarea") {
@@ -173,6 +150,16 @@
                         textarea.value = row[config.key] || "";
                         textarea.placeholder = "찬양 곡 목록 입력";
                         td.appendChild(textarea);
+                    } else if (config.type === "file") {
+                        // 💡 파일 업로드 인풋 및 기존 파일명 표시
+                        let html = '';
+                        if (row[config.key]) {
+                            // 원본 파일명만 추출해서 보여줌 (앞의 숫자 태그 제거)
+                            const displayFileName = row[config.key].split('_').slice(1).join('_');
+                            html += `<span class="score-info">첨부됨: ${displayFileName}</span>`;
+                        }
+                        html += `<input type="file" id="${config.key}-${index}" accept="image/*,.pdf">`;
+                        td.innerHTML = html;
                     } else {
                         const input = document.createElement('input');
                         input.type = "text";
@@ -190,6 +177,13 @@
                     } else if (config.key === "setlist") {
                         td.className += " setlist-cell";
                         td.innerText = row[config.key] || "";
+                    } else if (config.key === "score") {
+                        // 💡 악보가 있으면 다운로드/보기 버튼 표시
+                        if (row[config.key]) {
+                            td.innerHTML = `<a href="scores/${row[config.key]}" target="_blank" class="score-btn">📄 악보 보기</a>`;
+                        } else {
+                            td.innerHTML = `<span style="color: #bdc3c7; font-size: 12px;">없음</span>`;
+                        }
                     } else {
                         td.innerText = row[config.key] || "";
                     }
@@ -233,16 +227,13 @@
         renderTable();
     }
 
-    // 💡 기능 개선: 날짜 자동 계산 및 전주 데이터 복사 적용
     function addRow() {
         let nextDateStr = "";
-        let prevRowData = { mainKey: "", subKey: "", bass: "", guitar: "", drum: "", maleVoc: "", femaleVoc: "", setlist: "" };
+        let prevRowData = { mainKey: "", subKey: "", bass: "", guitar: "", drum: "", maleVoc: "", femaleVoc: "", setlist: "", score: "" };
 
-        // 현재 데이터가 하나 이상 존재할 때 동작
         if (rotationData.length > 0) {
             const lastRow = rotationData[rotationData.length - 1];
             
-            // 1. 전주 데이터 복사 (날짜 제외)
             prevRowData = {
                 mainKey: lastRow.mainKey || "",
                 subKey: lastRow.subKey || "",
@@ -251,35 +242,25 @@
                 drum: lastRow.drum || "",
                 maleVoc: lastRow.maleVoc || "",
                 femaleVoc: lastRow.femaleVoc || "",
-                setlist: lastRow.setlist || ""
+                setlist: lastRow.setlist || "",
+                score: "" // 악보는 매주 바뀌므로 자동 복사하지 않고 비워둠
             };
 
-            // 2. 마지막 등록 날짜 기준으로 정확히 7일 뒤 날짜 계산
             if (lastRow.date && lastRow.date.includes('/')) {
                 const [month, day] = lastRow.date.split('/');
                 const currentYear = new Date().getFullYear();
-                
                 const lastDateObj = new Date(currentYear, parseInt(month) - 1, parseInt(day));
-                lastDateObj.setDate(lastDateObj.getDate() + 7); // 7일 더하기
-                
+                lastDateObj.setDate(lastDateObj.getDate() + 7);
                 nextDateStr = `${lastDateObj.getMonth() + 1}/${lastDateObj.getDate()}`;
             }
         }
 
-        // 수집된 자동 생성 데이터 배열에 추가
-        rotationData.push({
-            date: nextDateStr,
-            ...prevRowData
-        });
-        
+        rotationData.push({ date: nextDateStr, ...prevRowData });
         renderTable();
 
-        // 새 항목이 추가되면 해당 위치(맨 오른쪽)로 스크롤 이동하여 보여줌
         setTimeout(() => {
             const container = document.getElementById('tableContainer');
-            if (container) {
-                container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
-            }
+            if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
         }, 50);
     }
 
@@ -290,30 +271,78 @@
         }
     }
 
+    // 💡 파일을 Base64 문자열로 변환하는 헬퍼 함수
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                // "data:image/jpeg;base64," 등의 접두사를 제거하고 순수 데이터만 추출
+                let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
+                if ((encoded.length % 4) > 0) {
+                    encoded += '='.repeat(4 - (encoded.length % 4));
+                }
+                resolve(encoded);
+            };
+            reader.onerror = error => reject(error);
+        });
+    }
+
     async function saveToGitHub() {
         let savedToken = localStorage.getItem('githubPraiseToken');
         
         if (!savedToken) {
-            savedToken = prompt("저장을 위한 인증 키(Token)를 입력해 주세요.\n(최초 1회만 입력하면 이 기기에 안전하게 저장됩니다.)");
+            savedToken = prompt("저장을 위한 인증 키(Token)를 입력해 주세요.");
             if (!savedToken) return; 
         }
 
-        rotationData.forEach((row, index) => {
-            row.date = document.getElementById(`date-${index}`).value;
-            row.mainKey = document.getElementById(`mainKey-${index}`).value;
-            row.subKey = document.getElementById(`subKey-${index}`).value;
-            row.bass = document.getElementById(`bass-${index}`).value;
-            row.guitar = document.getElementById(`guitar-${index}`).value;
-            row.drum = document.getElementById(`drum-${index}`).value;
-            row.maleVoc = document.getElementById(`maleVoc-${index}`).value;
-            row.femaleVoc = document.getElementById(`femaleVoc-${index}`).value;
-            row.setlist = document.getElementById(`setlist-${index}`).value;
-        });
-
-        const jsonString = JSON.stringify(rotationData, null, 2);
-        const encodedContent = window.btoa(unescape(encodeURIComponent(jsonString)));
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.innerText = "⏳ 파일 업로드 및 저장 중...";
+        saveBtn.style.pointerEvents = "none";
 
         try {
+            // 1. 텍스트 데이터 먼저 수집 및 첨부파일 확인
+            for (let i = 0; i < rotationData.length; i++) {
+                rotationData[i].date = document.getElementById(`date-${i}`).value;
+                rotationData[i].mainKey = document.getElementById(`mainKey-${i}`).value;
+                rotationData[i].subKey = document.getElementById(`subKey-${i}`).value;
+                rotationData[i].bass = document.getElementById(`bass-${i}`).value;
+                rotationData[i].guitar = document.getElementById(`guitar-${i}`).value;
+                rotationData[i].drum = document.getElementById(`drum-${i}`).value;
+                rotationData[i].maleVoc = document.getElementById(`maleVoc-${i}`).value;
+                rotationData[i].femaleVoc = document.getElementById(`femaleVoc-${i}`).value;
+                rotationData[i].setlist = document.getElementById(`setlist-${i}`).value;
+
+                // 2. 파일이 선택되었다면 개별적으로 GitHub API를 통해 업로드
+                const fileInput = document.getElementById(`score-${i}`);
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    // 중복 방지를 위해 파일명 앞에 시간을 붙임 (예: 1716382..._score.pdf)
+                    const uniqueFileName = Date.now() + "_" + file.name;
+                    const base64Content = await getBase64(file);
+                    
+                    // scores 폴더로 파일 업로드
+                    await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/scores/${uniqueFileName}`, {
+                        method: "PUT",
+                        headers: {
+                            "Authorization": `Bearer ${savedToken}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            message: `악보 업로드: ${file.name}`,
+                            content: base64Content
+                        })
+                    });
+                    
+                    // 업로드 성공 시 JSON 기록용으로 파일명 업데이트
+                    rotationData[i].score = uniqueFileName;
+                }
+            }
+
+            // 3. 최종 데이터(JSON) 업데이트
+            const jsonString = JSON.stringify(rotationData, null, 2);
+            const encodedContent = window.btoa(unescape(encodeURIComponent(jsonString)));
+
             const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`, {
                 method: "PUT",
                 headers: {
@@ -321,7 +350,7 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    message: "웹에서 찬양팀 로테이션 및 콘티 업데이트",
+                    message: "웹에서 찬양팀 로테이션 및 악보 업데이트",
                     content: encodedContent,
                     sha: fileSha
                 })
@@ -329,19 +358,23 @@
 
             if (response.ok) {
                 localStorage.setItem('githubPraiseToken', savedToken);
-                alert("성공적으로 저장되었습니다! 변경 사항이 사이트에 반영되기까지 약 1분 정도 소요될 수 있습니다.");
+                alert("성공적으로 저장되었습니다!\n(파일 용량에 따라 웹사이트 반영까지 1~2분 정도 걸릴 수 있습니다.)");
 
                 isEditMode = false;
+                saveBtn.innerText = "💾 저장하기";
+                saveBtn.style.pointerEvents = "auto";
                 document.getElementById('editBtn').style.display = 'flex';
                 document.getElementById('saveBtn').style.display = 'none';
                 document.getElementById('addBtn').style.display = 'none';
                 loadData();
             } else {
-                localStorage.removeItem('githubPraiseToken');
-                alert("저장 실패! 인증 키(Token)가 올바르지 않거나 권한이 없습니다.");
+                throw new Error("Token 권한 오류");
             }
         } catch (error) {
-            alert("네트워크 오류가 발생했습니다.");
+            saveBtn.innerText = "💾 저장하기";
+            saveBtn.style.pointerEvents = "auto";
+            localStorage.removeItem('githubPraiseToken');
+            alert("저장 및 업로드에 실패했습니다. 인증 키(Token)가 올바르지 않거나 파일이 너무 클 수 있습니다.");
         }
     }
 
