@@ -132,5 +132,41 @@
     "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
     "setlist": "",
     "score": []
+  },
+  {
+    "date": "7/12",
+    "mainKey": "신지수",
+    "subKey": "박은지",
+    "bass": "배태호",
+    "guitar": "안형근",
+    "drum": "김효중",
+    "maleVoc": "장상훈",
+    "femaleVoc": "전미선 / 김부희 / 민주영(Alto)",
+    "setlist": "",
+    "score": []
+  },
+  {
+    "date": "7/19",
+    "mainKey": "김보영",
+    "subKey": "배신애",
+    "bass": "민주영",
+    "guitar": "안형근",
+    "drum": "김효중",
+    "maleVoc": "정승호 / 장상훈",
+    "femaleVoc": "전미선 / 김부희(Alto)",
+    "setlist": "",
+    "score": []
+  },
+  {
+    "date": "7/26",
+    "mainKey": "김보영",
+    "subKey": "박은지",
+    "bass": "배태호",
+    "guitar": "박진우",
+    "drum": "권현성",
+    "maleVoc": "정승호 / 장상훈",
+    "femaleVoc": "전미선 / 김부희(Alto)",
+    "setlist": "",
+    "score": []
   }
 ]
