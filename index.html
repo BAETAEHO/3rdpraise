@@ -243,11 +243,14 @@
         setTimeout(() => {
             if (!isEditMode && thisWeekIndex !== -1) {
                 const container = document.getElementById('tableContainer');
-                const scrollPosition = (thisWeekIndex * 150) - 50; 
-                if (container) {
-                    container.scrollTo({ left: Math.max(0, scrollPosition), behavior: 'smooth' });
+                const targetCol = table.querySelector('.highlight-col');
+                const stickyHeader = table.querySelector('th');
+
+            if (container && targetCol && stickyHeader) {
+                const headerWidth = stickyHeader.offsetWidth;
+                const targetScrollLeft = targetCol.offsetLeft - headerWidth;
+                container.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: 'smooth' });
                 }
-            }
         }, 100);
     }
 
